@@ -1,6 +1,8 @@
 // routes/users.js
 import express from "express";
 import {
+  getMyProfile,
+  updateMyProfile,
   getAllUsers,
   getUserById,
   updateUserRole,
@@ -12,6 +14,10 @@ import { authenticate } from "../middleware/auth.js";
 import { authorize } from "../middleware/authorize.js";
 
 const router = express.Router();
+
+// Profile routes (any authenticated user)
+router.get("/me", authenticate, getMyProfile);
+router.put("/me", authenticate, updateMyProfile);
 
 // All routes require admin authentication
 router.use(authenticate);

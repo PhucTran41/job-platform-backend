@@ -15,6 +15,113 @@ export const validate = (req, res, next) => {
   next();
 };
 
+// Add to middleware/validators.js
+
+// Job posting validation
+export const validateJobCreate = [
+  body('title')
+    .trim()
+    .notEmpty()
+    .withMessage('Title is required')
+    .isLength({ min: 10, max: 200 })
+    .withMessage('Title must be between 10 and 200 characters'),
+
+  body('description')
+    .trim()
+    .notEmpty()
+    .withMessage('Description is required')
+    .isLength({ min: 50, max: 5000 })
+    .withMessage('Description must be between 50 and 5000 characters'),
+
+  body('requirements')
+    .trim()
+    .notEmpty()
+    .withMessage('Requirements are required')
+    .isLength({ min: 20, max: 5000 })
+    .withMessage('Requirements must be between 20 and 5000 characters'),
+
+  body('location')
+    .trim()
+    .notEmpty()
+    .withMessage('Location is required')
+    .isLength({ max: 200 })
+    .withMessage('Location must be less than 200 characters'),
+
+  body('industry')
+    .trim()
+    .notEmpty()
+    .withMessage('Industry is required')
+    .isLength({ max: 100 })
+    .withMessage('Industry must be less than 100 characters'),
+
+  body('jobType')
+    .trim()
+    .notEmpty()
+    .withMessage('Job type is required')
+    .isIn(['Full-time', 'Part-time', 'Contract', 'Internship'])
+    .withMessage('Job type must be Full-time, Part-time, Contract, or Internship'),
+
+  body('salary')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('Salary must be less than 100 characters'),
+
+  validate,
+];
+
+// Job update validation (all fields optional)
+export const validateJobUpdate = [
+  body('title')
+    .optional()
+    .trim()
+    .isLength({ min: 10, max: 200 })
+    .withMessage('Title must be between 10 and 200 characters'),
+
+  body('description')
+    .optional()
+    .trim()
+    .isLength({ min: 50, max: 5000 })
+    .withMessage('Description must be between 50 and 5000 characters'),
+
+  body('requirements')
+    .optional()
+    .trim()
+    .isLength({ min: 20, max: 5000 })
+    .withMessage('Requirements must be between 20 and 5000 characters'),
+
+  body('location')
+    .optional()
+    .trim()
+    .isLength({ max: 200 })
+    .withMessage('Location must be less than 200 characters'),
+
+  body('industry')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('Industry must be less than 100 characters'),
+
+  body('jobType')
+    .optional()
+    .trim()
+    .isIn(['Full-time', 'Part-time', 'Contract', 'Internship'])
+    .withMessage('Job type must be Full-time, Part-time, Contract, or Internship'),
+
+  body('salary')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('Salary must be less than 100 characters'),
+
+  validate,
+];
+
+
+
+
+
+
 // Product ID validation
 export const validateProductId = [
   param("id")

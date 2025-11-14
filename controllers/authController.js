@@ -14,8 +14,33 @@ import {
 
 // Register new user
 export const register = catchAsync(async (req, res, next) => {
-  const { email, username, password } = req.body;
+  const {
+    email,
+    password,
+    username,
+    role = "CANDIDATE", // Default to CANDIDATE
+    fullName,
+    phone,
+    // Candidate fields
+    skills,
+    experience,
+    education,
+    resume,
+    // Recruiter fields
+    companyName,
+    companyInfo,
+  } = req.body;
 
+  // Validate role
+  if (!["CANDIDATE", "RECRUITER"].includes(role)) {
+    throw new ValidationError("Role must be CANDIDATE or RECRUITER");
+  }
+
+  // Validate required fields based on role
+  if (role === "RECRUITER" && !companyName) {
+    throw new ValidationError("Company name is required for recruiters");
+  }
+  
   // Validate fields
   if (!email || !username || !password) {
     throw new ValidationError("Email, username, and password are required");
@@ -64,27 +89,63 @@ export const register = catchAsync(async (req, res, next) => {
   // Hash password
   const hashedPassword = await hashPassword(password);
 
+  // Build user data object
+  const userData = {
+    email: email.toLowerCase(),
+    username,
+    password: hashedPassword,
+    role, // ← FIX: Use the actual role variable!
+    fullName,
+    phone,
+  };
+
+  // Add role-specific fields
+  if (role === "CANDIDATE") {
+    userData.skills = skills || null;
+    userData.experience = experience || null;
+    userData.education = education || null;
+    userData.resume = resume || null;
+  } else if (role === "RECRUITER") {
+    userData.companyName = companyName;
+    userData.companyInfo = companyInfo || null;
+  }
+
   // Create user
   const user = await prisma.user.create({
-    data: {
-      email: email.toLowerCase(),
-      username,
-      password: hashedPassword,
-      role: "USER",
-    },
+    data: userData,
     select: {
       id: true,
       email: true,
       username: true,
       role: true,
+      fullName: true,
+      phone: true,
+      // Candidate fields
+      skills: true,
+      experience: true,
+      education: true,
+      resume: true,
+      // Recruiter fields
+      companyName: true,
+      companyInfo: true,
       createdAt: true,
     },
   });
 
+  // Generate token immediately after registration
+  const token = generateToken({
+    userId: user.id,
+    email: user.email,
+    role: user.role,
+  });
+
   res.status(201).json({
     status: "success",
-    message: "Registration successful! Please login.",
-    data: { user },
+    message: "Registration successful!",
+    data: { 
+      token,
+      user 
+    },
   });
 });
 

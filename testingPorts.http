@@ -1,0 +1,199 @@
+### Variables
+@baseUrl = http://localhost:5001/api
+@candidateToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjYsImVtYWlsIjoiY2FuZGlkYXRlQHRlc3QuY29tIiwicm9sZSI6IkNBTkRJREFURSIsImlhdCI6MTc2MzEwMjY2NSwiZXhwIjoxNzYzNzA3NDY1fQ.zZSTAoUN5ugfhLrei9kmSKmKEsL5Y8skIqYci_0P9Kc
+@recruiterToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUsImVtYWlsIjoicmVjcnVpdGVyQHRlc3QuY29tIiwicm9sZSI6IlJFQ1JVSVRFUiIsImlhdCI6MTc2MzEwMjY4NSwiZXhwIjoxNzYzNzA3NDg1fQ.bMIq3xHA5r4S8YD95rOgXjJC_ipW3dsiw0qHBC2Eaf0
+@adminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQsImVtYWlsIjoiYWRtaW5AdGVzdC5jb20iLCJyb2xlIjoiQURNSU4iLCJpYXQiOjE3NjMxMTE5OTksImV4cCI6MTc2MzcxNjc5OX0.gWe3KoxavgxR53gf1FequLrCHOfaga1Ip9ZOT85Eods
+
+### ============================================
+### PROFILE MANAGEMENT TESTS
+### ============================================
+
+### 1. Get candidate profile
+GET {{baseUrl}}/users/me
+Authorization: Bearer {{candidateToken}}
+
+### 2. Update candidate profile
+PUT {{baseUrl}}/users/me
+Authorization: Bearer {{candidateToken}}
+Content-Type: application/json
+
+{
+  "fullName": "Alice Johnson Updated",
+  "phone": "555-9999",
+  "skills": "Python,Django,PostgreSQL,Docker",
+  "experience": "3 years backend development with focus on APIs",
+  "education": "BS Computer Science, MIT"
+}
+
+### 3. Get updated candidate profile
+GET {{baseUrl}}/users/me
+Authorization: Bearer {{candidateToken}}
+
+### 4. Get recruiter profile
+GET {{baseUrl}}/users/me
+Authorization: Bearer {{recruiterToken}}
+
+### 5. Update recruiter profile
+PUT {{baseUrl}}/users/me
+Authorization: Bearer {{recruiterToken}}
+Content-Type: application/json
+
+{
+  "fullName": "Bob Smith",
+  "phone": "555-7777",
+  "companyName": "StartupCo Inc.",
+  "companyInfo": "Fast-growing tech startup specializing in AI solutions. 50+ employees."
+}
+
+### 6. Try to update with no fields (should fail)
+PUT {{baseUrl}}/users/me
+Authorization: Bearer {{candidateToken}}
+Content-Type: application/json
+
+{}
+
+### 7. Candidate tries to update recruiter fields (should be ignored)
+PUT {{baseUrl}}/users/me
+Authorization: Bearer {{candidateToken}}
+Content-Type: application/json
+
+{
+  "companyName": "Hacker Corp",
+  "skills": "Hacking,SQL Injection"
+}
+
+### ----------------------------------------------------------- Job Testing
+
+### Variables
+### ============================================
+### PUBLIC JOB BROWSING
+### ============================================
+
+### 1. Get all jobs (public)
+GET {{baseUrl}}/jobs
+
+### 2. Get jobs with filters
+GET {{baseUrl}}/jobs?industry=Technology&jobType=Full-time
+
+### 3. Get single job by ID
+GET {{baseUrl}}/jobs/2
+
+### 4. Search jobs
+GET {{baseUrl}}/jobs/search?q=developer&location=San Francisco
+
+### 5. Get all industries
+GET {{baseUrl}}/jobs/industries
+
+### ============================================
+### RECRUITER TESTS
+### ============================================
+
+### 6. Create job as recruiter (should work)
+POST {{baseUrl}}/jobs
+Authorization: Bearer {{recruiterToken}}
+Content-Type: application/json
+
+{
+  "title": "Backend Developer - Node.js & PostgreSQL",
+  "description": "We're looking for an experienced backend developer to join our growing team. You'll be working on high-scale APIs, designing database schemas, and building microservices. This is a great opportunity to work with modern technologies and collaborate with a talented team.",
+  "requirements": "5+ years of backend development experience. Strong knowledge of Node.js, Express, PostgreSQL, and RESTful API design. Experience with Docker and AWS is a plus. Excellent problem-solving skills and ability to work in a fast-paced environment.",
+  "salary": "$100,000 - $130,000",
+  "location": "Remote (US)",
+  "industry": "Technology",
+  "jobType": "Full-time"
+}
+
+### 7. Get my job postings
+GET {{baseUrl}}/jobs/my-jobs
+Authorization: Bearer {{recruiterToken}}
+
+### 8. Update own job (should work)
+PUT {{baseUrl}}/jobs/2
+Authorization: Bearer {{recruiterToken}}
+Content-Type: application/json
+
+{
+  "salary": "$110,000 - $140,000",
+  "description": "Updated description with more details about the role and company culture."
+}
+
+### 9. Delete own job (should work)
+DELETE {{baseUrl}}/jobs/2
+Authorization: Bearer {{recruiterToken}}
+
+### ============================================
+### AUTHORIZATION TESTS
+### ============================================
+
+### 10. Try to create job as candidate (should fail - 403)
+POST {{baseUrl}}/jobs
+Authorization: Bearer {{candidateToken}}
+Content-Type: application/json
+
+{
+  "title": "Unauthorized Job",
+  "description": "This should not be created because I'm a candidate",
+  "requirements": "Should fail with 403 Forbidden",
+  "location": "Anywhere",
+  "industry": "Test",
+  "jobType": "Full-time"
+}
+
+### 11. Try to update someone else's job as recruiter (should fail - 403)
+PUT {{baseUrl}}/jobs/2
+Authorization: Bearer {{recruiterToken}}
+Content-Type: application/json
+
+{
+  "title": "Trying to hack this job"
+}
+
+### 12. Admin can update any job (should work)
+PUT {{baseUrl}}/jobs/2
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "salary": "$150,000 - $180,000"
+}
+
+### ============================================
+### VALIDATION TESTS
+### ============================================
+
+### 13. Create job with missing fields (should fail - 400)
+POST {{baseUrl}}/jobs
+Authorization: Bearer {{recruiterToken}}
+Content-Type: application/json
+
+{
+  "title": "Incomplete Job"
+}
+
+### 14. Create job with invalid jobType (should fail - 400)
+POST {{baseUrl}}/jobs
+Authorization: Bearer {{recruiterToken}}
+Content-Type: application/json
+
+{
+  "title": "Full Stack Developer Position",
+  "description": "Great opportunity for a full stack developer to join our team",
+  "requirements": "3+ years experience with React and Node.js",
+  "location": "New York, NY",
+  "industry": "Technology",
+  "jobType": "Invalid Type"
+}
+
+### 15. Create job with short description (should fail - 400)
+POST {{baseUrl}}/jobs
+Authorization: Bearer {{recruiterToken}}
+Content-Type: application/json
+
+{
+  "title": "Software Engineer",
+  "description": "Short desc",
+  "requirements": "Must know coding very well",
+  "location": "Seattle",
+  "industry": "Tech",
+  "jobType": "Full-time"
+}
