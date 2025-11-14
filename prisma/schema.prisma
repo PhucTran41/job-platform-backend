@@ -1,0 +1,119 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+//Primas Client generation
+generator client { //Generates Prisma client for Node.js
+  provider = "prisma-client-js"
+}
+
+// Database Connection 
+datasource db { //Tells Prisma we are using PostgreSQL as our database
+  provider = "postgresql"
+  url      = env("DATABASE_URL") //Read DB Connection string from .env
+}
+// Enums
+enum Role {
+  USER
+  ADMIN
+  MODERATOR
+}
+
+// User Model
+model User {
+  id          Int       @id @default(autoincrement())
+  email       String    @unique @db.VarChar(255)
+  username    String    @unique @db.VarChar(50)
+  password    String    @db.VarChar(255)
+  role        Role      @default(USER)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  cart        Cart?
+  reviews     Review[]
+
+  @@index([email])
+  @@index([username])
+  @@map("users")
+}
+
+//Product Model
+model Product {
+  id                  Int       @id @default(autoincrement())
+  title               String    @db.VarChar(200)
+  description         String    @db.Text
+  price               Decimal   @db.Decimal(10, 2)
+  discountPercentage  Decimal   @default(0) @db.Decimal(5, 2)
+  rating              Decimal   @default(0) @db.Decimal(3, 2)
+  stock               Int       @default(0)
+  brand               String    @db.VarChar(100)
+  category            String    @db.VarChar(50)
+  thumbnail           String    @db.VarChar(500)
+  images              String[]  @default([])
+  isActive            Boolean   @default(true)
+  views               Int       @default(0)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  cartItems           CartItem[]
+  reviews             Review[]
+
+  @@index([category])
+  @@index([price])
+  @@index([brand])
+  @@map("products")
+
+}
+
+// Product reviews model
+model Review {
+  id          Int      @id @default(autoincrement())
+  productId   Int
+  userId      Int
+  rating      Int
+  comment     String?  @db.Text
+  createdAt   DateTime @default(now())
+
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)  // ← ADD THIS LINE
+
+  @@index([productId])
+  @@index([userId])  // ← ADD THIS LINE
+  @@map("reviews")
+}
+
+// Cart Model
+model Cart {
+  id          Int        @id @default(autoincrement())
+  userId      Int        @unique
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)  // ← ADD THIS LINE
+  items       CartItem[]
+
+  @@map("carts")
+}
+
+// CartItem Model (junction table)
+model CartItem {
+  id          Int      @id @default(autoincrement())
+  cartId      Int
+  productId   Int
+  quantity    Int      @default(1)
+  addedAt     DateTime @default(now())
+
+  // Relations
+  cart        Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([cartId, productId])
+  @@index([cartId])
+  @@index([productId])
+  @@map("cart_items")
+}
+

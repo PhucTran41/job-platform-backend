@@ -1,0 +1,176 @@
+### Variables
+@baseUrl = http://localhost:5001/api
+@userToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImVtYWlsIjoidXNlckB0ZXN0LmNvbSIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzYzMDI1MTEwLCJleHAiOjE3NjM2Mjk5MTB9.adPt92zKqfGoz4BYvKIh0EbwJ0eb78ega-TGQp1QLPw
+@adminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQsImVtYWlsIjoiYWRtaW5AdGVzdC5jb20iLCJyb2xlIjoiQURNSU4iLCJpYXQiOjE3NjMwODU4ODgsImV4cCI6MTc2MzY5MDY4OH0.QfCVvtblW7uReGvF2SN23MCQ0Wg-_CqEL8sJfXVZO_Y
+
+@moderatorToken = YOUR_MODERATOR_TOKEN
+
+### ============================================
+### 1. GET TOKENS FOR ALL ROLES
+### ============================================
+
+### Login as USER
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@test.com",
+  "password": "User123!"
+}
+
+### Login as ADMIN
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@test.com",
+  "password": "Admin123!"
+}
+
+### ============================================
+### 2. REVIEW TESTS
+### ============================================
+
+### Get reviews for product (PUBLIC)
+GET {{baseUrl}}/reviews/products/1/reviews
+
+### Create review as USER (should work)
+POST {{baseUrl}}/reviews/products/1/reviews
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "rating": 5,
+  "comment": "Amazing product! Highly recommend."
+}
+
+### Try to create duplicate review (should fail - 400)
+POST {{baseUrl}}/reviews/products/1/reviews
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "rating": 4,
+  "comment": "Another review"
+}
+
+### Update own review (should work)
+PUT {{baseUrl}}/reviews/1
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "rating": 4,
+  "comment": "Updated my review"
+}
+
+### Get my reviews
+GET {{baseUrl}}/reviews/my-reviews
+Authorization: Bearer {{userToken}}
+
+### Delete own review (should work)
+DELETE {{baseUrl}}/reviews/1
+Authorization: Bearer {{userToken}}
+
+### Try to delete someone else's review as USER (should fail - 403)
+DELETE {{baseUrl}}/reviews/2
+Authorization: Bearer {{userToken}}
+
+### Delete any review as ADMIN (should work)
+DELETE {{baseUrl}}/reviews/2
+Authorization: Bearer {{adminToken}}
+
+### ============================================
+### 3. USER MANAGEMENT (ADMIN ONLY)
+### ============================================
+
+### Get all users (ADMIN only)
+GET {{baseUrl}}/users
+Authorization: Bearer {{adminToken}}
+
+### Get all ADMIN users
+GET {{baseUrl}}/users?role=ADMIN
+Authorization: Bearer {{adminToken}}
+
+### Get all active users
+GET {{baseUrl}}/users?isActive=true
+Authorization: Bearer {{adminToken}}
+
+### Get single user
+GET {{baseUrl}}/users/2
+Authorization: Bearer {{adminToken}}
+
+### Try to get users as regular USER (should fail - 403)
+GET {{baseUrl}}/users
+Authorization: Bearer {{userToken}}
+
+### Update user role (promote to MODERATOR)
+PUT {{baseUrl}}/users/2/role
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "role": "MODERATOR"
+}
+
+### Deactivate user
+PUT {{baseUrl}}/users/5/deactivate
+Authorization: Bearer {{adminToken}}
+
+### Reactivate user
+PUT {{baseUrl}}/users/5/activate
+Authorization: Bearer {{adminToken}}
+
+### Try to deactivate self (should fail - 400)
+PUT {{baseUrl}}/users/5/deactivate
+Authorization: Bearer {{adminToken}}
+
+### Delete user
+DELETE {{baseUrl}}/users/5
+Authorization: Bearer {{adminToken}}
+
+### ============================================
+### 4. PRODUCT MANAGEMENT (ADMIN ONLY)
+### ============================================
+
+### Create product as ADMIN
+POST {{baseUrl}}/products
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "title": "Test Laptop",
+  "description": "High-performance laptop for testing",
+  "price": 1299.99,
+  "stock": 10,
+  "brand": "TestBrand",
+  "category": "laptops"
+}
+
+### Update product as ADMIN
+PUT {{baseUrl}}/products/36
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "price": 1199.99,
+  "stock": 15
+}
+
+### Delete product as ADMIN
+DELETE {{baseUrl}}/products/36
+Authorization: Bearer {{adminToken}}
+
+### Try to create product as USER (should fail - 403)
+POST {{baseUrl}}/products
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "title": "Unauthorized Product",
+  "description": "Should not work",
+  "price": 999,
+  "stock": 10,
+  "brand": "Test",
+  "category": "test"
+}
